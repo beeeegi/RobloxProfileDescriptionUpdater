@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 username = "UPDATE THE USERNAME VARIABLE"
 password = "UPDATE THE PASSWORD VARIABLE"
@@ -9,35 +10,38 @@ description = "UPDATE THE DESCRIPTION VARIABLE"
 driver = webdriver.Chrome()
 driver.get("https://www.roblox.com/login")
 
-# logging in into the account
-driver.find_element(By.ID, "login-username").send_keys(username)
+# logging into the account
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "login-username"))).send_keys(username)
 driver.find_element(By.ID, "login-password").send_keys(password)
 driver.find_element(By.ID, "login-button").click()
 
-time.sleep(3)
+# wait until the profile avatar is clickable and then click it
+WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "avatar"))).click()
 
-# navigates to the profile
-driver.find_element(By.CLASS_NAME, "avatar").click()
+# wait until the profile description is present
+old_description = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "profile-about-text"))).text
 
-time.sleep(3)
+# click the edit button
+WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "btn-generic-edit-sm"))).click()
 
-# storing old description into the variable, then writing a new description and saving it
-oldDecsription = driver.find_element(By.ID, "profile-about-text").text
-driver.find_element(By.CLASS_NAME, "btn-generic-edit-sm").click()
-driver.find_element(By.ID, "descriptionTextBox").clear()
-driver.find_element(By.ID, "descriptionTextBox").send_keys(description)
-driver.find_element(By.ID, "SaveInfoSettings").click()
+# clear and enter the new description
+description_textbox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "descriptionTextBox")))
+description_textbox.clear()
+description_textbox.send_keys(description)
 
-time.sleep(3)
+# click the save button
+WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "SaveInfoSettings"))).click()
+
+# wait until the new description is updated
+new_description = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "profile-about-text"))).text
 
 # output
-textbox = driver.find_element(By.ID, "profile-about-text").text
-if description in textbox:
-    print(F"Old description: {oldDecsription}.")
-    print(f"New description: {textbox}.")
+if description in new_description:
+    print(f"Old description: {old_description}.")
+    print(f"New description: {new_description}.")
     print("\nTest passed. Description was changed.")
 else:
-    print(f"Current description: {textbox}.")
+    print(f"Current description: {new_description}.")
     print("Test failed.")
 
 driver.quit()
